@@ -47,7 +47,7 @@ This document describes a generic COSE and HTTP based service, which can be appl
 
 {::boilerplate bcp14-tagged}
 
-The terms "cose-sign1" and "cose-key" are defined in {{-COSE}}.
+The terms "cose-sign1" and "cose-key", and "cose-key-set" are defined in {{-COSE}}.
 
 issuer:
 : A name for the entity that produces a cose-sign1.
@@ -362,9 +362,11 @@ Concrete instantiations of this operation MUST be synchronous, and cannot exceed
 
 ## Verify Opaque Signature
 
-The verify opaque signature operation takes an `opaque-signature`, and optional `payload` as input and produces a boolean value `true` if the signature verifies as decribed in {{Section 4.4 of RFC9052}}.
+The verify opaque signature operation takes an `opaque-signature`, and optional (`payload` or `payload-reference`) as input and produces a boolean value `true` if the signature verifies as decribed in {{Section 4.4 of RFC9052}}.
 
 The `payload` MUST be included for detached payload cose-sign1 and MUST NOT be included for attached payload cose-sign1, see {{Section 2 of RFC9052}} for detached regarding detached content.
+
+In the case a `payload` is large, a `payload-reference` MAY be used instead.
 
 Note that no public key or certificate is provided as input, because the verification key must be discoverable from the details of the protected header.
 
@@ -372,7 +374,7 @@ Key discovery, distribution, resolution and dereferencing are out of scope for t
 
 ## Verify Receipt
 
-The verify receipt operation takes an optional `payload`, `opaque-signature` and a `receipt` as input and produces a boolean value `true` if the following succeed and `false` otherwise:
+The verify receipt operation takes an optional (`payload` or `payload-reference`), `opaque-signature` and a `receipt` as input and produces a boolean value `true` if the following succeed and `false` otherwise:
 
 - Verify Opaque Signature MUST return `true` for the `opaque-signature`.
 - Verify Proof MUST return `true` for all proofs inside the `receipt` unprotected header.
@@ -380,17 +382,21 @@ The verify receipt operation takes an optional `payload`, `opaque-signature` and
 
 The `payload` MUST be included for detached payload cose-sign1 and MUST NOT be included for attached payload cose-sign1, see {{Section 2 of RFC9052}} for detached regarding detached content.
 
+In the case a `payload` is large, a `payload-reference` MAY be used instead.
+
 Note that no public key or certificate is provided as input, because the verification key must be discoverable from the details of the protected headers.
 
 Key discovery, distribution, resolution and dereferencing are out of scope for this document.
 
 ## Verify Transparent Signature
 
-The verify transparent signature operation takes an optional `payload` and `transparent-signature` as input and produces a boolean `true` as output when the following succeed and `false` otherwise:
+The verify transparent signature operation takes an optional (`payload` or `payload-reference`) and `transparent-signature` as input and produces a boolean `true` as output when the following succeed and `false` otherwise:
 
 For each `receipt` in the `transparent-signature` the Verify Receipt operation MUST return true.
 
 The `payload` MUST be included for detached payload cose-sign1 and MUST NOT be included for attached payload cose-sign1, see {{Section 2 of RFC9052}} for detached regarding detached content.
+
+In the case a `payload` is large, a `payload-reference` MAY be used instead.
 
 Note that no public key or certificate is provided as input, because the verification key must be discoverable from the details of the protected headers.
 
@@ -404,11 +410,13 @@ Producing an empty set of verification keys MUST be interpretted as the issuer b
 
 The content type of the output MUST be a registered media type in {{IANA.media-types}}.
 
+Implementations MUST support "cose-key-set", and MAY support "jwk-set".
+
 This operation MAY be called on issuers or notaries.
 
 ## Verify References
 
-The verify references operation takes an identifier for a message (`opaque-signature-reference`, `receipt-reference`, `transparent-signature-reference`) and an optional `payload` as input and produces a boolean `true` or `false` as output.
+The verify references operation takes an identifier for a message ( `payload-reference`, `opaque-signature-reference`, `receipt-reference`, `transparent-signature-reference`) and an optional `payload` as input and produces a boolean `true` or `false` as output.
 
 This operation requires the provider to be able to resolve a given identifier to a message, and then apply the Verify Opaque Signature, Verify Receipt or Verify Transparent Signature operations.
 
