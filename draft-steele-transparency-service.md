@@ -43,6 +43,14 @@ Transparency Services have been adopted for use cases including {{-CERTIFICATE-T
 
 This document describes a generic COSE and HTTP based service, which can be applied to any use case that build on top of HTTP and COSE.
 
+Producers create content, which they then sign and submit transparency services.
+
+Transparency services act as a kind of notary, authenticating signed content from issuers, and providing receipts, which can be used to convince a verifier that an issuer is legitimate, based on mutual trust in the notary.
+
+The identity layer is not bound to a specific PKI, but is compatible with credentialing systems based on public key cryptography that are supported by {{-COSE}}.
+
+We use the term "Identity Document" as a place holder for "x509 certificate" or "cose-key" 
+
 ~~~aasvg
                          .------------.                   +----------+
 Content   -->           |  Payload     +----------------->+ Content  |
@@ -56,7 +64,7 @@ Issuers  -->    |  Identity  |      |                          |
                       |             |                 |               |
                       v             v                 |               |
                  .----+----.  .-----+----.            |               |
-                | Envelope  || Payload    |           |               |
+                | Headers   || Payload    |           |               |
                  '----+----'  '-----+----'            |               |
                       |             |                 |               |
                        '----. .----'                  |               |
@@ -99,7 +107,7 @@ Verifiers -->      / Review    / / Verify Transparent / / Analyze  /  |
                                           |                           |
                                           v                           |
                               .-----------+-------.                   |
-                             / Verify Content    + <------------------+
+                             / Verify Content    /<-------------------+
 Relying Parties    -->      /  Transparency     /
                            '-------------------'
 ~~~
@@ -111,7 +119,8 @@ Relying Parties    -->      /  Transparency     /
 The terms "cose-sign1" and "cose-key", and "cose-key-set" are defined in {{-COSE}}.
 
 issuer:
-: A name for the entity that produces a cose-sign1. Issuers are identified by Identity Documents.
+: A name for the entity that produces a cose-sign1.
+  Issuers are identified by Identity Documents.
 
 opaque-signature:
 : A cose-sign1 as decribed in {{-COSE}}.
@@ -123,7 +132,9 @@ transparent-signature:
 : A cose-sign1, opaque-signature, with one or more receipts included in its unprotected header.
 
 notary:
-: A name for the entity that produces a receipt. A notary is an issuer of receipts.
+: A name for the entity that produces a receipt.
+  A notary is an issuer of receipts.
+  Notaries are identified by Identity Documents.
 
 # Messages
 
