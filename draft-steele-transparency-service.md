@@ -43,6 +43,67 @@ Transparency Services have been adopted for use cases including {{-CERTIFICATE-T
 
 This document describes a generic COSE and HTTP based service, which can be applied to any use case that build on top of HTTP and COSE.
 
+~~~aasvg
+                         .------------.                   +----------+
+Content   -->           |  Payload     +----------------->+ Content  |
+Producers                '----------+-'                   | Storage  |
+                 .----------.       |                     +----+-----+
+Issuers  -->    |  Identity  |      |                          |
+                |  Document  +------)-----------------+        +------+
+                 '----+-----'       |                 |               |
+                      |             |                 |               |
+                      | Identifiers |                 |               |
+                      |             |                 |               |
+                      v             v                 |               |
+                 .----+----.  .-----+----.            |               |
+                | Envelope  || Payload    |           |               |
+                 '----+----'  '-----+----'            |               |
+                      |             |                 |               |
+                       '----. .----'                  |               |
+                             |                        |               |
+                             v                        |               |
+                        .----+----.                   |               |
+                       | Opaque    |                  |               |
+                       | Signature |                  |               |
+                        '----+----'                   |               |
+                             |                        v               |
+                             |                +-------+------+        |
+                          .-' '-------------->+ Transparency |        |
+                         |   .----------.     |              |        |
+Transparency    -->      |  | Receipt 1  +<---+   Service 1  +----+   |
+Provider 1               |   '---+------'     +---------+----+    |   |
+                         |       |                      |         |   |
+    ...                  |       |           +--------------+     |   |
+                      .-' '------)---------->+ Transparency |     |   |
+                     |   .----------.        |              |     |   |
+Transparency  -->    |  | Receipt 2  +<------+   Service 2  +--+  |   |
+Provider 2           |   '----+-----'        +----+---------+  |  |   |
+                     |        |  |                |     |      |  |   |
+    ...               '-. .--'   |                |     |      |  |   |
+                         |       |                |     |      |  |   |
+                          '-. .-'                 |     |      |  |   |
+                             |                    |     |      |  |   |
+                             v                    v     v      |  |   |
+                       .-----+------.        .----+-----+-.    |  |   |
+                      | Transparent  |      | Identity     |   |  |   |
+                      | Signatures   |      | Documents    |   |  |   |
+                       '-----+------'        '------+-----'    |  |   |
+                             |                      |          |  |   |
+                             |'--------.     .-----'           |  |   |
+                             |          |   |                  |  |   |
+                             v          v   v                  v  v   |
+                    .--------+--. .-----+---+----------. .-----+--+-. |
+Verifiers -->      / Review    / / Verify Transparent / / Analyze  /  |
+                  /  Receipts / /  Signatures        / /  Logs    /   |
+                 '-----------' '----------+---------' '----------'    |
+                                          |                           |
+                                          v                           |
+                              .-----------+-------.                   |
+                             / Verify Content    + <------------------+
+Relying Parties    -->      /  Transparency     /
+                           '-------------------'
+~~~
+
 # Terminology
 
 {::boilerplate bcp14-tagged}
@@ -50,7 +111,7 @@ This document describes a generic COSE and HTTP based service, which can be appl
 The terms "cose-sign1" and "cose-key", and "cose-key-set" are defined in {{-COSE}}.
 
 issuer:
-: A name for the entity that produces a cose-sign1.
+: A name for the entity that produces a cose-sign1. Issuers are identified by Identity Documents.
 
 opaque-signature:
 : A cose-sign1 as decribed in {{-COSE}}.
@@ -407,6 +468,8 @@ Key discovery, distribution, resolution and dereferencing are out of scope for t
 The verify issuer operation takes an identifier for the issuer as input, and produces a set of verification keys for the issuer as output.
 
 Producing an empty set of verification keys MUST be interpretted as the issuer being untrusted, and not verified.
+
+The set of verification keys, combined with the issuer identifier, delivered from a trust store, is also called an Identity Document.
 
 The content type of the output MUST be a registered media type in {{IANA.media-types}}.
 
