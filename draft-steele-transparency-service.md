@@ -84,6 +84,68 @@ There are no changes to the protected header requirements described in {{Section
 
 The media type `application/opaque-signature+cose` SHOULD be used to distinguish opaque signatures from other forms of cose-sign1.
 
+~~~ cddl
+Opaque_Signature = #6.18(COSE_Sign1)
+
+COSE_Sign1 = [
+  protected   : bstr .cbor Opaque_Signature_Protected_Header,
+  unprotected : Opaque_Signature_Unprotected_Header,
+  payload     : bstr,
+  signature   : bstr
+]
+
+Opaque_Signature_Protected_Header = {
+
+  ; Algorithm Identifier,
+  ? (alg: 1)   => int
+
+  ; Key Identifier,
+  ? (kid: 4)   => bstr
+
+  ; CBOR Web Token Claims,
+  ? (cwt-claims: 15)  => Opaque_Signature_CWT_Claims
+
+  ; Payload Content Type
+  ? (content-type: 3)   => tstr
+
+  ; X.509 Certificate Thumbprint
+  ? (x509-thumbprint: 34)  => COSE_CertHash
+
+  * cose-label => cose-value
+
+}
+
+COSE_X509 = bstr / [ 2*certs: bstr ]
+COSE_CertHash = [ hashAlg: (int / tstr), hashValue: bstr ]
+
+
+Opaque_Signature_CWT_Claims = {
+
+  ; Issuer
+  ? (iss: 1) => tstr,
+
+  ; Subject
+  ? (sub: 2) => tstr,
+
+  ; Audience
+  ? (aud: 3) => tstr,
+
+  ; Expiration
+  ? (exp: 4) => uint .within (~time),
+
+  ; Issued At
+  ? (iat: 6) => uint .within (~time),
+
+  ; label MUST be less than -65536
+  * label => value
+
+}
+
+Opaque_Signature_Unprotected_Header = {
+  * cose-label => cose-value
+}
+~~~
+
 ## Receipt
 
 A receipt MUST be a cose-sign1 produced according to {{-COSE}}.
@@ -97,6 +159,78 @@ The payload MAY be detached, as described in {{Section 4.1 of RFC9052}}.
 There are no changes to the protected header requirements described in {{Section 4 of RFC9052}}, and {{-COSE-RECEIPTS}}.
 
 The media type `application/receipt+cose` SHOULD be used to distinguish receipts from other forms of cose-sign1.
+
+
+~~~ cddl
+
+Receipt = #6.18(Receipt_as_COSE_Sign1)
+
+Receipt_as_COSE_Sign1 = [
+    protected : bstr .cbor Receipt_Protected_Header,
+    unprotected : Receipt_Unprotected_Header,
+    payload: nil,
+    signature : bstr
+]
+
+Receipt_Protected_Header = {
+
+  ; Algorithm Identifier,
+  ? (alg: 1)   => int
+
+  ; Key Identifier,
+  ? (kid: 4)   => bstr
+
+  ; CBOR Web Token Claims,
+  ? (cwt-claims: 15)  => Opaque_Signature_CWT_Claims
+
+  ; Payload Content Type
+  ? (content-type: 3)   => tstr
+
+  ; X.509 Certificate Thumbprint
+  ? (x509-thumbprint: 34)  => COSE_CertHash
+
+  ; Verifiable Data Structure
+  &(verifiable-data-structure: -111) => int,
+
+  * cose-label => cose-value
+}
+
+COSE_X509 = bstr / [ 2*certs: bstr ]
+COSE_CertHash = [ hashAlg: (int / tstr), hashValue: bstr ]
+
+Receipt_CWT_Claims = {
+  ; Issuer
+  ? (iss: 1) => tstr,
+
+  ; Subject
+  ? (sub: 2) => tstr,
+
+  ; Audience
+  ? (aud: 3) => tstr,
+
+  ; Expiration
+  ? (exp: 4) => uint .within (~time),
+
+  ; Issued At
+  ? (iat: 6) => uint .within (~time),
+
+  ; label MUST be less than -65536
+  * label => value
+}
+
+Receipt_Unprotected_Header = {
+  &(verifiable-data-proof: -222) => Verifiable_Proofs
+  * cose-label => cose-value
+}
+
+Verifiable_Proofs = {
+  &(inclusion-proofs: -1) => Inclusion_Proofs
+}
+
+Inclusion_Proofs = [ + Inclusion_Proof ]
+
+Inclusion_Proof = bstr .cbor
+~~~
 
 ## Transparent Signature
 
@@ -112,7 +246,23 @@ There are no changes to the protected header requirements described in {{Section
 
 The media type `application/transparent-signature+cose` SHOULD be used to distinguish transparent signatures from other forms of cose-sign1.
 
-# Message Identifiers
+~~~ cddl
+Transparent_Signature = #6.18(Transparent_Signature)
+
+Transparent_Signature_as_COSE_Sign1 = [
+  protected   : bstr .cbor Opaque_Signature_Protected_Header,
+  unprotected : Transparent_Signature_Unprotected_Header,
+  payload     : bstr,
+  signature   : bstr
+]
+
+Transparent_Signature_Unprotected_Header = {
+  (receipts: 394) => [+ Receipt],
+  * cose-label => cose-value
+}
+~~~
+
+# Message URNs
 
 This section describes deterministic names for the conceptual messages described in the previous section, and one new message type "payload" which is defined in {{RFC9052}}.
 
@@ -164,6 +314,8 @@ urn:transparent.vendor.example:5i6UeRzg1...qnGmr1o
 {: #urn-vendor-specific-identifier-examples align="left" title="Vendor URN Examples"}
 
 Implementations are cautioned that these vendor specific identifiers cannot be understood globablly.
+
+# Message URLs
 
 Identifiers MAY be prefixed with a URL base, such as `https://vendor.example`.
 
@@ -254,9 +406,9 @@ The content type of the output MUST be a registered media type in {{IANA.media-t
 
 This operation MAY be called on issuers or notaries.
 
-## Verify Message By Name
+## Verify References
 
-The verify message by name operation takes an identifier for a message (`opaque-signature-reference`, `receipt-reference`, `transparent-signature-reference`) and an optional `payload` as input and produces a boolean `true` or `false` as output.
+The verify references operation takes an identifier for a message (`opaque-signature-reference`, `receipt-reference`, `transparent-signature-reference`) and an optional `payload` as input and produces a boolean `true` or `false` as output.
 
 This operation requires the provider to be able to resolve a given identifier to a message, and then apply the Verify Opaque Signature, Verify Receipt or Verify Transparent Signature operations.
 
@@ -331,7 +483,7 @@ Body (in CBOR diagnostic notation):
     [
       h'a4013822...3a616263',       / Protected                     /
       {                             / Unprotected                   /
-        TBD: {                      / Proofs                        /
+        -222: {                     / Proofs                        /
           -1: [                     / Inclusion proofs (1)          /
             h'83040382...8628a031', / Inclusion proof 1             /
           ]
@@ -384,7 +536,7 @@ Body:
 }
 ~~~
 
-## Verify Message By Name
+## Verify References
 
 Request:
 
