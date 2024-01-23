@@ -1,6 +1,6 @@
-# TODO - Your title
+# Transparency Service
 
-This is the working area for the individual Internet-Draft, "TODO - Your title".
+This is the working area for the individual Internet-Draft, "Transparency Service".
 
 * [Editor's Copy](https://OR13.github.io/draft-steele-transparency-service/#go.draft-steele-transparency-service.html)
 * [Datatracker Page](https://datatracker.ietf.org/doc/draft-steele-transparency-service)

@@ -1,6 +1,5 @@
 ---
-title: "TODO - Your title"
-abbrev: "TODO - Abbreviation"
+title: "Transparency Service"
 category: info
 
 docname: draft-steele-transparency-service-latest
@@ -9,24 +8,17 @@ number:
 date:
 consensus: true
 v: 3
-# area: AREA
-# workgroup: WG Working Group
 keyword:
- - next generation
- - unicorn
- - sparkling distributed ledger
+ - cose
+ - transparency
+ - service
 venue:
-#  group: WG
-#  type: Working Group
-#  mail: WG@example.com
-#  arch: https://example.com/WG
   github: "OR13/draft-steele-transparency-service"
   latest: "https://OR13.github.io/draft-steele-transparency-service/draft-steele-transparency-service.html"
 
 author:
  -
     fullname: "Orie Steele"
-    organization: Your Organization Here
     email: "orie@or13.io"
 
 normative:
