@@ -22,26 +22,403 @@ author:
     email: "orie@or13.io"
 
 normative:
+  IANA.media-types:
+  RFC9052: COSE
+  I-D.draft-ietf-cose-merkle-tree-proofs: COSE-RECEIPTS
 
 informative:
-
+  RFC9162: CERTIFICATE-TRANSPARENCY
+  I-D.draft-ietf-keytrans-architecture: KEY-TRANSPARENCY
+  I-D.draft-ietf-scitt-architecture: SCITT-ARCHITECTURE
 
 --- abstract
 
-TODO Abstract
-
+This document describes an http service and interaction patterns for obtaining receipts for signatures, that can be used to provide transparency.
 
 --- middle
 
 # Introduction
 
-TODO Introduction
+Transparency Services have been adopted for use cases including {{-CERTIFICATE-TRANSPARENCY}}, {{-KEY-TRANSPARENCY}},  {{-SCITT-ARCHITECTURE}}.
 
+This document describes a generic COSE and HTTP based service, which can be applied to any use case that build on top of HTTP and COSE.
 
-# Conventions and Definitions
+# Terminology
 
 {::boilerplate bcp14-tagged}
 
+The terms "cose-sign1" and "cose-key" are defined in {{-COSE}}.
+
+issuer:
+: A name for the entity that produces a cose-sign1.
+
+opaque-signature:
+: A cose-sign1 as decribed in {{-COSE}}.
+
+receipt:
+: A cose-sign1, with an inclusion, consistency or other proof type as described in {{-COSE-RECEIPTS}}.
+
+transparent-signature:
+: A cose-sign1, opaque-signature, with one or more receipts included in its unprotected header.
+
+notary:
+: A name for the entity that produces a receipt. A notary is an issuer of receipts.
+
+# Messages
+
+This section describes the conceptual messages supported by transparency services.
+
+Each message is a cose-sign1, and MAY be described with the media type `application/cose; cose-type="cose-sign1"` as defined in {{-COSE}}.
+
+To provide additional clarity, we define new media types for each conceptual message.
+
+## Opaque Signature
+
+An opaque signature MUST be a cose-sign1 produced according to {{-COSE}}.
+
+The unprotected header MAY contain arbitrary data, as described in {{Section 3 of RFC9052}}.
+
+The payload MAY be detached, as described in {{Section 4.1 of RFC9052}}.
+
+There are no changes to the protected header requirements described in {{Section 4 of RFC9052}}.
+
+The media type `application/opaque-signature+cose` SHOULD be used to distinguish opaque signatures from other forms of cose-sign1.
+
+## Receipt
+
+A receipt MUST be a cose-sign1 produced according to {{-COSE}}.
+
+The unprotected header MAY contain arbitrary data, as described in {{Section 3 of RFC9052}}.
+
+The unprotected header MUST include an a proof as described in {{-COSE-RECEIPTS}}.
+
+The payload MAY be detached, as described in {{Section 4.1 of RFC9052}}.
+
+There are no changes to the protected header requirements described in {{Section 4 of RFC9052}}, and {{-COSE-RECEIPTS}}.
+
+The media type `application/receipt+cose` SHOULD be used to distinguish receipts from other forms of cose-sign1.
+
+## Transparent Signature
+
+A transparent signature MUST be a cose-sign1 produced according to {{-COSE}}.
+
+The unprotected header MAY contain arbitrary data, as described in {{Section 3 of RFC9052}}.
+
+The unprotected header MUST include an a receipt as described in this document.
+
+The payload MAY be detached, as described in {{Section 4.1 of RFC9052}}.
+
+There are no changes to the protected header requirements described in {{Section 4 of RFC9052}}, and this document.
+
+The media type `application/transparent-signature+cose` SHOULD be used to distinguish transparent signatures from other forms of cose-sign1.
+
+# Message Identifiers
+
+This section describes deterministic names for the conceptual messages described in the previous section, and one new message type "payload" which is defined in {{RFC9052}}.
+
+The following URI template is used produce URNs:
+
+~~~
+urn:ietf:params:{wg}:\
+{message-type}:\
+{hash-name}:{base-encoding}:\
+{base64url-encoded-bytes-digest}
+~~~
+
+`wg` MUST be the name of an IETF Working Group.
+
+`message-type` MUST be `payload`, `opaque-signature`, `receipt`, or `transparent-signature`.
+
+`hash-name` MUST be `sha-256`.
+
+`base-encoding` MUST be `base64url`.
+
+`base64url-encoded-bytes-digest` MUST be the the base64url encoded sha-256 digest of the `payload`, `opaque-signature`, `receipt`, or `transparent-signature`.
+
+Note that this identifier scheme is sensitive to changes in the unprotected header and signature of the cose-sign1.
+
+The following informative examples are provided:
+
+~~~
+urn:ietf:params:cose:payload\
+:sha-256:base64url:5i6UeRzg1...qnGmr1o
+urn:ietf:params:cose:opaque-signature\
+:sha-256:base64url:5i6UeRzg1...qnGmr1o
+urn:ietf:params:cose:receipt\
+:sha-256:base64url:5i6UeRzg1...qnGmr1o
+urn:ietf:params:cose:transparent-signature\
+:sha-256:base64url:5i6UeRzg1...qnGmr1o
+~~~
+{: #urn-identifier-examples align="left" title="URN Examples"}
+
+Implementations MAY choose to shorten these identifiers by replacing the middle sections of these URNs, for example `ietf:params:cose:opaque-signature:sha-256:base64url`, with a vendor specific URL safe string.
+
+The following informative examples are provided:
+
+~~~
+urn:payload.vendor.example:5i6UeRzg1...qnGmr1o
+urn:opaque.vendor.example:5i6UeRzg1...qnGmr1o
+urn:receipt.vendor.example:5i6UeRzg1...qnGmr1o
+urn:transparent.vendor.example:5i6UeRzg1...qnGmr1o
+~~~
+{: #urn-vendor-specific-identifier-examples align="left" title="Vendor URN Examples"}
+
+Implementations are cautioned that these vendor specific identifiers cannot be understood globablly.
+
+Identifiers MAY be prefixed with a URL base, such as `https://vendor.example`.
+
+For example:
+
+~~~
+https://vendor.example/urn:...:5i6UeRzg1...qnGmr1o
+~~~
+{: #url-identifier-examples align="left" title="URL Examples"}
+
+These identifiers MAY be used as values for `opaque-signature-reference`, `receipt-reference`, `transparent-signature-reference`, which are produced and consumed in the Operations section of this document.
+
+# Operations
+
+This section describes the operations associated with the conceptual messages described in this document.
+
+Each operation is defined in terms on consuming inputs and producing outputs.
+
+The operations defined in this section are abstract, but a concrete HTTP API for them is provided in Section TBD of this document.
+
+## Register Opaque Signature
+
+The register opaque signature operation takes an `opaque-signature` as input and produces a `receipt`, or `receipt-reference` as output.
+
+Concrete instantiations of this operation MUST return a `receipt-reference` in case a `receipt` cannot be produced in under 100 seconds.
+
+## Request Receipt
+
+The request receipt operation takes an `receipt-reference` as input and produces a `receipt` as output.
+
+Concrete instantiations of this operation MUST return a `receipt-reference` in case a `receipt` cannot be produced in under 100 seconds.
+
+## Attach Receipt
+
+The attach receipt operation takes an (`opaque-signature` or `transparent-signature`) and `receipt` as input and produces a `transparent-signature`, or `transparent-signature-reference` as output.
+
+Concrete instantiations of this operation MUST be synchronous, and cannot exceed 100 seconds to complete.
+
+## Detach Receipt
+
+The detach receipt operation takes a `transparent-signature`, and index number as input and produces an (`opaque-signature`, `transparent-signature`, or `transparent-signature-reference`) as output.
+
+Concrete instantiations of this operation MUST be synchronous, and cannot exceed 100 seconds to complete.
+
+## Verify Opaque Signature
+
+The verify opaque signature operation takes an `opaque-signature`, and optional `payload` as input and produces a boolean value `true` if the signature verifies as decribed in {{Section 4.4 of RFC9052}}.
+
+The `payload` MUST be included for detached payload cose-sign1 and MUST NOT be included for attached payload cose-sign1, see {{Section 2 of RFC9052}} for detached regarding detached content.
+
+Note that no public key or certificate is provided as input, because the verification key must be discoverable from the details of the protected header.
+
+Key discovery, distribution, resolution and dereferencing are out of scope for this document.
+
+## Verify Receipt
+
+The verify receipt operation takes an optional `payload`, `opaque-signature` and a `receipt` as input and produces a boolean value `true` if the following succeed and `false` otherwise:
+
+- Verify Opaque Signature MUST return `true` for the `opaque-signature`.
+- Verify Proof MUST return `true` for all proofs inside the `receipt` unprotected header.
+- Verify must return `true` for the `receipt`, as described in {{Section 4.4 of RFC9052}}.
+
+The `payload` MUST be included for detached payload cose-sign1 and MUST NOT be included for attached payload cose-sign1, see {{Section 2 of RFC9052}} for detached regarding detached content.
+
+Note that no public key or certificate is provided as input, because the verification key must be discoverable from the details of the protected headers.
+
+Key discovery, distribution, resolution and dereferencing are out of scope for this document.
+
+## Verify Transparent Signature
+
+The verify transparent signature operation takes an optional `payload` and `transparent-signature` as input and produces a boolean `true` as output when the following succeed and `false` otherwise:
+
+For each `receipt` in the `transparent-signature` the Verify Receipt operation MUST return true.
+
+The `payload` MUST be included for detached payload cose-sign1 and MUST NOT be included for attached payload cose-sign1, see {{Section 2 of RFC9052}} for detached regarding detached content.
+
+Note that no public key or certificate is provided as input, because the verification key must be discoverable from the details of the protected headers.
+
+Key discovery, distribution, resolution and dereferencing are out of scope for this document.
+
+## Verify Issuer
+
+The verify issuer operation takes an identifier for the issuer as input, and produces a set of verification keys for the issuer as output.
+
+Producing an empty set of verification keys MUST be interpretted as the issuer being untrusted, and not verified.
+
+The content type of the output MUST be a registered media type in {{IANA.media-types}}.
+
+This operation MAY be called on issuers or notaries.
+
+## Verify Message By Name
+
+The verify message by name operation takes an identifier for a message (`opaque-signature-reference`, `receipt-reference`, `transparent-signature-reference`) and an optional `payload` as input and produces a boolean `true` or `false` as output.
+
+This operation requires the provider to be able to resolve a given identifier to a message, and then apply the Verify Opaque Signature, Verify Receipt or Verify Transparent Signature operations.
+
+# HTTP API
+
+This section proposes concrete http endpoints for the operations described in the previous section.
+
+## Register Opaque Signature
+
+Request:
+
+~~~ http-message
+NOTE: '\' line wrapping per RFC 8792
+
+POST /register/opaque-signature HTTP/1.1
+Host: transparency.service.example
+Content-Type: \
+  application/opaque-signature+cose
+Body (in CBOR diagnostic notation):
+
+18(                                 / COSE Sign 1                   /
+    [
+      h'a4013822...3a343536',       / Protected Header              /
+      {},                           / Unprotected Header            /
+      nil,                          / Detached Payload              /
+      h'4be77803...65c72b2a'        / Signature                     /
+    ]
+)
+
+~~~
+
+Response:
+
+~~~ http-message
+NOTE: '\' line wrapping per RFC 8792
+
+HTTP/1.1 200 Ok
+Content-Type: \
+  application/json
+Body:
+{
+  "receipt": "https://transparency.service.example/receipts\
+  /urn:ietf:params:cose:opaque-signature\
+  :sha-256:base64url:5i6UeRzg1...qnGmr1o"
+}
+~~~
+
+## Request Receipt
+
+Request:
+
+~~~ http-message
+NOTE: '\' line wrapping per RFC 8792
+
+GET /receipts/urn:...opaque-signature...:5i6UeRzg1...qnGmr1o HTTP/1.1
+Host: transparency.service.example
+Accept: \
+  application/receipt+cose
+~~~
+
+Response:
+
+~~~ http-message
+NOTE: '\' line wrapping per RFC 8792
+
+HTTP/1.1 200 Ok
+Content-Type: \
+  application/receipt+cose
+Body (in CBOR diagnostic notation):
+
+18(                                 / COSE Sign 1                   /
+    [
+      h'a4013822...3a616263',       / Protected                     /
+      {                             / Unprotected                   /
+        TBD: {                      / Proofs                        /
+          -1: [                     / Inclusion proofs (1)          /
+            h'83040382...8628a031', / Inclusion proof 1             /
+          ]
+        },
+      },
+      h'',                          / Detached payload              /
+      h'15280897...93ef39e5'        / Signature                     /
+    ]
+)
+~~~
+
+## Verify Issuer
+
+Request:
+
+~~~ http-message
+NOTE: '\' line wrapping per RFC 8792
+
+GET /issuer/vendor.example HTTP/1.1
+Host: transparency.service.example
+Accept: \
+  application/jwk-set+json
+~~~
+
+Response:
+
+~~~ http-message
+NOTE: '\' line wrapping per RFC 8792
+
+HTTP/1.1 200 Ok
+Content-Type: \
+  application/jwk-set+json
+Body:
+
+{
+  "keys": [
+    {
+      "kid": "urn:ietf:params:oauth:jwk-thumbprint:sha-256:Nz2...sXs"
+      "kty": "EC",
+      "crv": "P-256",
+      "alg": "ES256",
+      "x": "MKBCTNIcKUSDii11ySs3526iDZ8AiTo7Tu6KPAqv7D4",
+      "y": "4Etl6SRW2YiLUrN5vfvVHuhp7x8PxltmWWlbbM4IFyM"
+      "x5t": "NTBGNTJEMDc3RUE3RUVEO...yOTY5NDNGOUQ4OEU5OA",
+      "x5c": [
+        "MIIDCzCCAfOgAwIBAgIJA...iwiJS+u/nSYvqCFt57+g3R+"
+      ]
+    }
+  ]
+}
+~~~
+
+## Verify Message By Name
+
+Request:
+
+~~~ http-message
+NOTE: '\' line wrapping per RFC 8792
+
+POST /verify/references HTTP/1.1
+Host: transparency.service.example
+Content-Type: \
+  application/json
+Body:
+{
+  "payload": "urn:ietf:params:cose:payload\
+  :sha-256:base64url:5i6UeRzg1...qnGmr1o",
+  "transparent-signature": "urn:ietf:params\
+  :cose:transparent-signature\
+  :sha-256:base64url:5i6UeRzg1...qnGmr1o"
+}
+
+~~~
+
+Response:
+
+~~~ http-message
+NOTE: '\' line wrapping per RFC 8792
+
+HTTP/1.1 200 Ok
+Content-Type: \
+  application/json
+Body:
+{
+  "verified": true
+}
+~~~
 
 # Security Considerations
 
@@ -50,7 +427,7 @@ TODO Security
 
 # IANA Considerations
 
-This document has no IANA actions.
+TODO Request Registration of Media Types
 
 
 --- back
