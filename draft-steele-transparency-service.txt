@@ -69,27 +69,28 @@ Table of Contents
      3.1.  Opaque Signature
      3.2.  Receipt
      3.3.  Transparent Signature
-   4.  Message Identifiers
-   5.  Operations
-     5.1.  Register Opaque Signature
-     5.2.  Request Receipt
-     5.3.  Attach Receipt
-     5.4.  Detach Receipt
-     5.5.  Verify Opaque Signature
-     5.6.  Verify Receipt
-     5.7.  Verify Transparent Signature
-     5.8.  Verify Issuer
-     5.9.  Verify Message By Name
-   6.  HTTP API
+   4.  Message URNs
+   5.  Message URLs
+   6.  Operations
      6.1.  Register Opaque Signature
      6.2.  Request Receipt
-     6.3.  Verify Issuer
-     6.4.  Verify Message By Name
-   7.  Security Considerations
-   8.  IANA Considerations
-   9.  References
-     9.1.  Normative References
-     9.2.  Informative References
+     6.3.  Attach Receipt
+     6.4.  Detach Receipt
+     6.5.  Verify Opaque Signature
+     6.6.  Verify Receipt
+     6.7.  Verify Transparent Signature
+     6.8.  Verify Issuer
+     6.9.  Verify References
+   7.  HTTP API
+     7.1.  Register Opaque Signature
+     7.2.  Request Receipt
+     7.3.  Verify Issuer
+     7.4.  Verify References
+   8.  Security Considerations
+   9.  IANA Considerations
+   10. References
+     10.1.  Normative References
+     10.2.  Informative References
    Acknowledgments
    Author's Address
 
@@ -154,6 +155,66 @@ Table of Contents
    The media type application/opaque-signature+cose SHOULD be used to
    distinguish opaque signatures from other forms of cose-sign1.
 
+   Opaque_Signature = #6.18(COSE_Sign1)
+
+   COSE_Sign1 = [
+     protected   : bstr .cbor Opaque_Signature_Protected_Header,
+     unprotected : Opaque_Signature_Unprotected_Header,
+     payload     : bstr,
+     signature   : bstr
+   ]
+
+   Opaque_Signature_Protected_Header = {
+
+     ; Algorithm Identifier,
+     ? (alg: 1)   => int
+
+     ; Key Identifier,
+     ? (kid: 4)   => bstr
+
+     ; CBOR Web Token Claims,
+     ? (cwt-claims: 15)  => Opaque_Signature_CWT_Claims
+
+     ; Payload Content Type
+     ? (content-type: 3)   => tstr
+
+     ; X.509 Certificate Thumbprint
+     ? (x509-thumbprint: 34)  => COSE_CertHash
+
+     * cose-label => cose-value
+
+   }
+
+   COSE_X509 = bstr / [ 2*certs: bstr ]
+   COSE_CertHash = [ hashAlg: (int / tstr), hashValue: bstr ]
+
+
+   Opaque_Signature_CWT_Claims = {
+
+     ; Issuer
+     ? (iss: 1) => tstr,
+
+     ; Subject
+     ? (sub: 2) => tstr,
+
+     ; Audience
+     ? (aud: 3) => tstr,
+
+     ; Expiration
+     ? (exp: 4) => uint .within (~time),
+
+     ; Issued At
+     ? (iat: 6) => uint .within (~time),
+
+     ; label MUST be less than -65536
+     * label => value
+
+   }
+
+   Opaque_Signature_Unprotected_Header = {
+     * cose-label => cose-value
+   }
+
 3.2.  Receipt
 
    A receipt MUST be a cose-sign1 produced according to [RFC9052].
@@ -173,6 +234,74 @@ Table of Contents
 
    The media type application/receipt+cose SHOULD be used to distinguish
    receipts from other forms of cose-sign1.
+
+   Receipt = #6.18(Receipt_as_COSE_Sign1)
+
+   Receipt_as_COSE_Sign1 = [
+       protected : bstr .cbor Receipt_Protected_Header,
+       unprotected : Receipt_Unprotected_Header,
+       payload: nil,
+       signature : bstr
+   ]
+
+   Receipt_Protected_Header = {
+
+     ; Algorithm Identifier,
+     ? (alg: 1)   => int
+
+     ; Key Identifier,
+     ? (kid: 4)   => bstr
+
+     ; CBOR Web Token Claims,
+     ? (cwt-claims: 15)  => Opaque_Signature_CWT_Claims
+
+     ; Payload Content Type
+     ? (content-type: 3)   => tstr
+
+     ; X.509 Certificate Thumbprint
+     ? (x509-thumbprint: 34)  => COSE_CertHash
+
+     ; Verifiable Data Structure
+     &(verifiable-data-structure: -111) => int,
+
+     * cose-label => cose-value
+   }
+
+   COSE_X509 = bstr / [ 2*certs: bstr ]
+   COSE_CertHash = [ hashAlg: (int / tstr), hashValue: bstr ]
+
+   Receipt_CWT_Claims = {
+     ; Issuer
+     ? (iss: 1) => tstr,
+
+     ; Subject
+     ? (sub: 2) => tstr,
+
+     ; Audience
+     ? (aud: 3) => tstr,
+
+     ; Expiration
+     ? (exp: 4) => uint .within (~time),
+
+     ; Issued At
+     ? (iat: 6) => uint .within (~time),
+
+     ; label MUST be less than -65536
+     * label => value
+   }
+
+   Receipt_Unprotected_Header = {
+     &(verifiable-data-proof: -222) => Verifiable_Proofs
+     * cose-label => cose-value
+   }
+
+   Verifiable_Proofs = {
+     &(inclusion-proofs: -1) => Inclusion_Proofs
+   }
+
+   Inclusion_Proofs = [ + Inclusion_Proof ]
+
+   Inclusion_Proof = bstr .cbor
 
 3.3.  Transparent Signature
 
@@ -194,7 +323,21 @@ Table of Contents
    The media type application/transparent-signature+cose SHOULD be used
    to distinguish transparent signatures from other forms of cose-sign1.
 
-4.  Message Identifiers
+   Transparent_Signature = #6.18(Transparent_Signature)
+
+   Transparent_Signature_as_COSE_Sign1 = [
+     protected   : bstr .cbor Opaque_Signature_Protected_Header,
+     unprotected : Transparent_Signature_Unprotected_Header,
+     payload     : bstr,
+     signature   : bstr
+   ]
+
+   Transparent_Signature_Unprotected_Header = {
+     (receipts: 394) => [+ Receipt],
+     * cose-label => cose-value
+   }
+
+4.  Message URNs
 
    This section describes deterministic names for the conceptual
    messages described in the previous section, and one new message type
@@ -253,6 +396,8 @@ Table of Contents
    Implementations are cautioned that these vendor specific identifiers
    cannot be understood globablly.
 
+5.  Message URLs
+
    Identifiers MAY be prefixed with a URL base, such as
    https://vendor.example.
 
@@ -266,7 +411,7 @@ Table of Contents
    reference, receipt-reference, transparent-signature-reference, which
    are produced and consumed in the Operations section of this document.
 
-5.  Operations
+6.  Operations
 
    This section describes the operations associated with the conceptual
    messages described in this document.
@@ -277,7 +422,7 @@ Table of Contents
    The operations defined in this section are abstract, but a concrete
    HTTP API for them is provided in Section TBD of this document.
 
-5.1.  Register Opaque Signature
+6.1.  Register Opaque Signature
 
    The register opaque signature operation takes an opaque-signature as
    input and produces a receipt, or receipt-reference as output.
@@ -285,7 +430,7 @@ Table of Contents
    Concrete instantiations of this operation MUST return a receipt-
    reference in case a receipt cannot be produced in under 100 seconds.
 
-5.2.  Request Receipt
+6.2.  Request Receipt
 
    The request receipt operation takes an receipt-reference as input and
    produces a receipt as output.
@@ -293,7 +438,7 @@ Table of Contents
    Concrete instantiations of this operation MUST return a receipt-
    reference in case a receipt cannot be produced in under 100 seconds.
 
-5.3.  Attach Receipt
+6.3.  Attach Receipt
 
    The attach receipt operation takes an (opaque-signature or
    transparent-signature) and receipt as input and produces a
@@ -302,7 +447,7 @@ Table of Contents
    Concrete instantiations of this operation MUST be synchronous, and
    cannot exceed 100 seconds to complete.
 
-5.4.  Detach Receipt
+6.4.  Detach Receipt
 
    The detach receipt operation takes a transparent-signature, and index
    number as input and produces an (opaque-signature, transparent-
@@ -311,7 +456,7 @@ Table of Contents
    Concrete instantiations of this operation MUST be synchronous, and
    cannot exceed 100 seconds to complete.
 
-5.5.  Verify Opaque Signature
+6.5.  Verify Opaque Signature
 
    The verify opaque signature operation takes an opaque-signature, and
    optional payload as input and produces a boolean value true if the
@@ -328,7 +473,7 @@ Table of Contents
    Key discovery, distribution, resolution and dereferencing are out of
    scope for this document.
 
-5.6.  Verify Receipt
+6.6.  Verify Receipt
 
    The verify receipt operation takes an optional payload, opaque-
    signature and a receipt as input and produces a boolean value true if
@@ -353,7 +498,7 @@ Table of Contents
    Key discovery, distribution, resolution and dereferencing are out of
    scope for this document.
 
-5.7.  Verify Transparent Signature
+6.7.  Verify Transparent Signature
 
    The verify transparent signature operation takes an optional payload
    and transparent-signature as input and produces a boolean true as
@@ -373,7 +518,7 @@ Table of Contents
    Key discovery, distribution, resolution and dereferencing are out of
    scope for this document.
 
-5.8.  Verify Issuer
+6.8.  Verify Issuer
 
    The verify issuer operation takes an identifier for the issuer as
    input, and produces a set of verification keys for the issuer as
@@ -387,10 +532,10 @@ Table of Contents
 
    This operation MAY be called on issuers or notaries.
 
-5.9.  Verify Message By Name
+6.9.  Verify References
 
-   The verify message by name operation takes an identifier for a
-   message (opaque-signature-reference, receipt-reference, transparent-
+   The verify references operation takes an identifier for a message
+   (opaque-signature-reference, receipt-reference, transparent-
    signature-reference) and an optional payload as input and produces a
    boolean true or false as output.
 
@@ -398,12 +543,12 @@ Table of Contents
    identifier to a message, and then apply the Verify Opaque Signature,
    Verify Receipt or Verify Transparent Signature operations.
 
-6.  HTTP API
+7.  HTTP API
 
    This section proposes concrete http endpoints for the operations
    described in the previous section.
 
-6.1.  Register Opaque Signature
+7.1.  Register Opaque Signature
 
    Request:
 
@@ -438,7 +583,7 @@ Table of Contents
      :sha-256:base64url:5i6UeRzg1...qnGmr1o"
    }
 
-6.2.  Request Receipt
+7.2.  Request Receipt
 
    Request:
 
@@ -462,7 +607,7 @@ Table of Contents
        [
          h'a4013822...3a616263',       / Protected                     /
          {                             / Unprotected                   /
-           TBD: {                      / Proofs                        /
+           -222: {                     / Proofs                        /
              -1: [                     / Inclusion proofs (1)          /
                h'83040382...8628a031', / Inclusion proof 1             /
              ]
@@ -473,7 +618,7 @@ Table of Contents
        ]
    )
 
-6.3.  Verify Issuer
+7.3.  Verify Issuer
 
    Request:
 
@@ -510,7 +655,7 @@ Table of Contents
      ]
    }
 
-6.4.  Verify Message By Name
+7.4.  Verify References
 
    Request:
 
@@ -541,17 +686,17 @@ Table of Contents
      "verified": true
    }
 
-7.  Security Considerations
+8.  Security Considerations
 
    TODO Security
 
-8.  IANA Considerations
+9.  IANA Considerations
 
    TODO Request Registration of Media Types
 
-9.  References
+10.  References
 
-9.1.  Normative References
+10.1.  Normative References
 
    [I-D.draft-ietf-cose-merkle-tree-proofs]
               Steele, O., Birkholz, H., Delignat-Lavaud, A., and C.
@@ -579,7 +724,7 @@ Table of Contents
               DOI 10.17487/RFC9052, August 2022,
               <https://www.rfc-editor.org/rfc/rfc9052>.
 
-9.2.  Informative References
+10.2.  Informative References
 
    [I-D.draft-ietf-keytrans-architecture]
               McMillion, B., "Key Transparency Architecture", Work in
