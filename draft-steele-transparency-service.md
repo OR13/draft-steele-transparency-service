@@ -49,7 +49,7 @@ Transparency services act as a kind of notary, authenticating signed content fro
 
 The identity layer is not bound to a specific PKI, but is compatible with credentialing systems based on public key cryptography that are supported by {{-COSE}}.
 
-We use the term "Identity Document" as a place holder for "x509 certificate" or "cose-key" 
+We use the term "Identity Document" as a placeholder for "x509 certificate" or a name and a "cose-key", "cose-key-set", "jwk", or "jwk-set".
 
 ~~~aasvg
                          .------------.                   +----------+
