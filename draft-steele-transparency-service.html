@@ -1242,7 +1242,7 @@ svg :is([fill="white"], [fill^="#fff"]) {
 "<span class="bcp14">MAY</span>", and "<span class="bcp14">OPTIONAL</span>" in this document are to be interpreted as
 described in BCP 14 <span>[<a href="#RFC2119" class="cite xref">RFC2119</a>]</span> <span>[<a href="#RFC8174" class="cite xref">RFC8174</a>]</span> when, and only when, they
 appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶</a></p>
-<p id="section-2-2">The terms "cose-sign1" and "cose-key" are defined in <span>[<a href="#RFC9052" class="cite xref">RFC9052</a>]</span>.<a href="#section-2-2" class="pilcrow">¶</a></p>
+<p id="section-2-2">The terms "cose-sign1" and "cose-key", and "cose-key-set" are defined in <span>[<a href="#RFC9052" class="cite xref">RFC9052</a>]</span>.<a href="#section-2-2" class="pilcrow">¶</a></p>
 <span class="break"></span><dl class="dlParallel" id="section-2-3">
         <dt id="section-2-3.1">issuer:</dt>
         <dd style="margin-left: 1.5em" id="section-2-3.2">
@@ -1600,10 +1600,11 @@ https://vendor.example/urn:...:5i6UeRzg1...qnGmr1o
         <h3 id="name-verify-opaque-signature">
 <a href="#section-6.5" class="section-number selfRef">6.5. </a><a href="#name-verify-opaque-signature" class="section-name selfRef">Verify Opaque Signature</a>
         </h3>
-<p id="section-6.5-1">The verify opaque signature operation takes an <code>opaque-signature</code>, and optional <code>payload</code> as input and produces a boolean value <code>true</code> if the signature verifies as decribed in <span><a href="https://rfc-editor.org/rfc/rfc9052#section-4.4" class="relref">Section 4.4</a> of [<a href="#RFC9052" class="cite xref">RFC9052</a>]</span>.<a href="#section-6.5-1" class="pilcrow">¶</a></p>
+<p id="section-6.5-1">The verify opaque signature operation takes an <code>opaque-signature</code>, and optional (<code>payload</code> or <code>payload-reference</code>) as input and produces a boolean value <code>true</code> if the signature verifies as decribed in <span><a href="https://rfc-editor.org/rfc/rfc9052#section-4.4" class="relref">Section 4.4</a> of [<a href="#RFC9052" class="cite xref">RFC9052</a>]</span>.<a href="#section-6.5-1" class="pilcrow">¶</a></p>
 <p id="section-6.5-2">The <code>payload</code> <span class="bcp14">MUST</span> be included for detached payload cose-sign1 and <span class="bcp14">MUST NOT</span> be included for attached payload cose-sign1, see <span><a href="https://rfc-editor.org/rfc/rfc9052#section-2" class="relref">Section 2</a> of [<a href="#RFC9052" class="cite xref">RFC9052</a>]</span> for detached regarding detached content.<a href="#section-6.5-2" class="pilcrow">¶</a></p>
-<p id="section-6.5-3">Note that no public key or certificate is provided as input, because the verification key must be discoverable from the details of the protected header.<a href="#section-6.5-3" class="pilcrow">¶</a></p>
-<p id="section-6.5-4">Key discovery, distribution, resolution and dereferencing are out of scope for this document.<a href="#section-6.5-4" class="pilcrow">¶</a></p>
+<p id="section-6.5-3">In the case a <code>payload</code> is large, a <code>payload-reference</code> <span class="bcp14">MAY</span> be used instead.<a href="#section-6.5-3" class="pilcrow">¶</a></p>
+<p id="section-6.5-4">Note that no public key or certificate is provided as input, because the verification key must be discoverable from the details of the protected header.<a href="#section-6.5-4" class="pilcrow">¶</a></p>
+<p id="section-6.5-5">Key discovery, distribution, resolution and dereferencing are out of scope for this document.<a href="#section-6.5-5" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="verify-receipt">
@@ -1611,7 +1612,7 @@ https://vendor.example/urn:...:5i6UeRzg1...qnGmr1o
         <h3 id="name-verify-receipt">
 <a href="#section-6.6" class="section-number selfRef">6.6. </a><a href="#name-verify-receipt" class="section-name selfRef">Verify Receipt</a>
         </h3>
-<p id="section-6.6-1">The verify receipt operation takes an optional <code>payload</code>, <code>opaque-signature</code> and a <code>receipt</code> as input and produces a boolean value <code>true</code> if the following succeed and <code>false</code> otherwise:<a href="#section-6.6-1" class="pilcrow">¶</a></p>
+<p id="section-6.6-1">The verify receipt operation takes an optional (<code>payload</code> or <code>payload-reference</code>), <code>opaque-signature</code> and a <code>receipt</code> as input and produces a boolean value <code>true</code> if the following succeed and <code>false</code> otherwise:<a href="#section-6.6-1" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-6.6-2.1">
             <p id="section-6.6-2.1.1">Verify Opaque Signature <span class="bcp14">MUST</span> return <code>true</code> for the <code>opaque-signature</code>.<a href="#section-6.6-2.1.1" class="pilcrow">¶</a></p>
@@ -1624,8 +1625,9 @@ https://vendor.example/urn:...:5i6UeRzg1...qnGmr1o
 </li>
         </ul>
 <p id="section-6.6-3">The <code>payload</code> <span class="bcp14">MUST</span> be included for detached payload cose-sign1 and <span class="bcp14">MUST NOT</span> be included for attached payload cose-sign1, see <span><a href="https://rfc-editor.org/rfc/rfc9052#section-2" class="relref">Section 2</a> of [<a href="#RFC9052" class="cite xref">RFC9052</a>]</span> for detached regarding detached content.<a href="#section-6.6-3" class="pilcrow">¶</a></p>
-<p id="section-6.6-4">Note that no public key or certificate is provided as input, because the verification key must be discoverable from the details of the protected headers.<a href="#section-6.6-4" class="pilcrow">¶</a></p>
-<p id="section-6.6-5">Key discovery, distribution, resolution and dereferencing are out of scope for this document.<a href="#section-6.6-5" class="pilcrow">¶</a></p>
+<p id="section-6.6-4">In the case a <code>payload</code> is large, a <code>payload-reference</code> <span class="bcp14">MAY</span> be used instead.<a href="#section-6.6-4" class="pilcrow">¶</a></p>
+<p id="section-6.6-5">Note that no public key or certificate is provided as input, because the verification key must be discoverable from the details of the protected headers.<a href="#section-6.6-5" class="pilcrow">¶</a></p>
+<p id="section-6.6-6">Key discovery, distribution, resolution and dereferencing are out of scope for this document.<a href="#section-6.6-6" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="verify-transparent-signature">
@@ -1633,11 +1635,12 @@ https://vendor.example/urn:...:5i6UeRzg1...qnGmr1o
         <h3 id="name-verify-transparent-signatur">
 <a href="#section-6.7" class="section-number selfRef">6.7. </a><a href="#name-verify-transparent-signatur" class="section-name selfRef">Verify Transparent Signature</a>
         </h3>
-<p id="section-6.7-1">The verify transparent signature operation takes an optional <code>payload</code> and <code>transparent-signature</code> as input and produces a boolean <code>true</code> as output when the following succeed and <code>false</code> otherwise:<a href="#section-6.7-1" class="pilcrow">¶</a></p>
+<p id="section-6.7-1">The verify transparent signature operation takes an optional (<code>payload</code> or <code>payload-reference</code>) and <code>transparent-signature</code> as input and produces a boolean <code>true</code> as output when the following succeed and <code>false</code> otherwise:<a href="#section-6.7-1" class="pilcrow">¶</a></p>
 <p id="section-6.7-2">For each <code>receipt</code> in the <code>transparent-signature</code> the Verify Receipt operation <span class="bcp14">MUST</span> return true.<a href="#section-6.7-2" class="pilcrow">¶</a></p>
 <p id="section-6.7-3">The <code>payload</code> <span class="bcp14">MUST</span> be included for detached payload cose-sign1 and <span class="bcp14">MUST NOT</span> be included for attached payload cose-sign1, see <span><a href="https://rfc-editor.org/rfc/rfc9052#section-2" class="relref">Section 2</a> of [<a href="#RFC9052" class="cite xref">RFC9052</a>]</span> for detached regarding detached content.<a href="#section-6.7-3" class="pilcrow">¶</a></p>
-<p id="section-6.7-4">Note that no public key or certificate is provided as input, because the verification key must be discoverable from the details of the protected headers.<a href="#section-6.7-4" class="pilcrow">¶</a></p>
-<p id="section-6.7-5">Key discovery, distribution, resolution and dereferencing are out of scope for this document.<a href="#section-6.7-5" class="pilcrow">¶</a></p>
+<p id="section-6.7-4">In the case a <code>payload</code> is large, a <code>payload-reference</code> <span class="bcp14">MAY</span> be used instead.<a href="#section-6.7-4" class="pilcrow">¶</a></p>
+<p id="section-6.7-5">Note that no public key or certificate is provided as input, because the verification key must be discoverable from the details of the protected headers.<a href="#section-6.7-5" class="pilcrow">¶</a></p>
+<p id="section-6.7-6">Key discovery, distribution, resolution and dereferencing are out of scope for this document.<a href="#section-6.7-6" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="verify-issuer">
@@ -1648,7 +1651,8 @@ https://vendor.example/urn:...:5i6UeRzg1...qnGmr1o
 <p id="section-6.8-1">The verify issuer operation takes an identifier for the issuer as input, and produces a set of verification keys for the issuer as output.<a href="#section-6.8-1" class="pilcrow">¶</a></p>
 <p id="section-6.8-2">Producing an empty set of verification keys <span class="bcp14">MUST</span> be interpretted as the issuer being untrusted, and not verified.<a href="#section-6.8-2" class="pilcrow">¶</a></p>
 <p id="section-6.8-3">The content type of the output <span class="bcp14">MUST</span> be a registered media type in <span>[<a href="#IANA.media-types" class="cite xref">IANA.media-types</a>]</span>.<a href="#section-6.8-3" class="pilcrow">¶</a></p>
-<p id="section-6.8-4">This operation <span class="bcp14">MAY</span> be called on issuers or notaries.<a href="#section-6.8-4" class="pilcrow">¶</a></p>
+<p id="section-6.8-4">Implementations <span class="bcp14">MUST</span> support "cose-key-set", and <span class="bcp14">MAY</span> support "jwk-set".<a href="#section-6.8-4" class="pilcrow">¶</a></p>
+<p id="section-6.8-5">This operation <span class="bcp14">MAY</span> be called on issuers or notaries.<a href="#section-6.8-5" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="verify-references">
@@ -1656,7 +1660,7 @@ https://vendor.example/urn:...:5i6UeRzg1...qnGmr1o
         <h3 id="name-verify-references">
 <a href="#section-6.9" class="section-number selfRef">6.9. </a><a href="#name-verify-references" class="section-name selfRef">Verify References</a>
         </h3>
-<p id="section-6.9-1">The verify references operation takes an identifier for a message (<code>opaque-signature-reference</code>, <code>receipt-reference</code>, <code>transparent-signature-reference</code>) and an optional <code>payload</code> as input and produces a boolean <code>true</code> or <code>false</code> as output.<a href="#section-6.9-1" class="pilcrow">¶</a></p>
+<p id="section-6.9-1">The verify references operation takes an identifier for a message ( <code>payload-reference</code>, <code>opaque-signature-reference</code>, <code>receipt-reference</code>, <code>transparent-signature-reference</code>) and an optional <code>payload</code> as input and produces a boolean <code>true</code> or <code>false</code> as output.<a href="#section-6.9-1" class="pilcrow">¶</a></p>
 <p id="section-6.9-2">This operation requires the provider to be able to resolve a given identifier to a message, and then apply the Verify Opaque Signature, Verify Receipt or Verify Transparent Signature operations.<a href="#section-6.9-2" class="pilcrow">¶</a></p>
 </section>
 </div>
@@ -1705,9 +1709,7 @@ Content-Type: \
   application/json
 Body:
 {
-  "receipt": "https://transparency.service.example/receipts\
-  /urn:ietf:params:cose:opaque-signature\
-  :sha-256:base64url:5i6UeRzg1...qnGmr1o"
+  "receipt": "https://.../receipts/urn:...qnGmr1o"
 }
 </pre><a href="#section-7.1-4" class="pilcrow">¶</a>
 </div>
@@ -1819,11 +1821,11 @@ Content-Type: \
   application/json
 Body:
 {
-  "payload": "urn:ietf:params:cose:payload\
-  :sha-256:base64url:5i6UeRzg1...qnGmr1o",
-  "transparent-signature": "urn:ietf:params\
-  :cose:transparent-signature\
-  :sha-256:base64url:5i6UeRzg1...qnGmr1o"
+
+  "payload": "urn:...qnGmr1o",
+
+  "transparent-signature": "urn:...qnGmr1o"
+
 }
 
 </pre><a href="#section-7.4-2" class="pilcrow">¶</a>
