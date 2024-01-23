@@ -450,9 +450,7 @@ Content-Type: \
   application/json
 Body:
 {
-  "receipt": "https://transparency.service.example/receipts\
-  /urn:ietf:params:cose:opaque-signature\
-  :sha-256:base64url:5i6UeRzg1...qnGmr1o"
+  "receipt": "https://.../receipts/urn:...qnGmr1o"
 }
 ~~~
 
@@ -549,11 +547,11 @@ Content-Type: \
   application/json
 Body:
 {
-  "payload": "urn:ietf:params:cose:payload\
-  :sha-256:base64url:5i6UeRzg1...qnGmr1o",
-  "transparent-signature": "urn:ietf:params\
-  :cose:transparent-signature\
-  :sha-256:base64url:5i6UeRzg1...qnGmr1o"
+
+  "payload": "urn:...qnGmr1o",
+
+  "transparent-signature": "urn:...qnGmr1o"
+
 }
 
 ~~~
