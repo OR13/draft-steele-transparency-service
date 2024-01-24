@@ -24,7 +24,9 @@ author:
 normative:
   IANA.media-types:
   RFC9052: COSE
+  RFC8693: TOKEN-EXCHANGE
   I-D.draft-ietf-cose-merkle-tree-proofs: COSE-RECEIPTS
+  I-D.draft-demarco-nonce-endpoint: NONCE-ENDPOINT
 
 informative:
   RFC9162: CERTIFICATE-TRANSPARENCY
@@ -535,6 +537,61 @@ Body:
   "receipt": "https://.../receipts/urn:...qnGmr1o"
 }
 ~~~
+
+In some cases, the opaque signature may need to demonstrate proof of possession of a specific key.
+
+For example, the `cnf` claim can be used to create an identity document, where an opaque signature is signed by the public key included in the identity document, and the signature is over some "nonce" or "challenge" provided by the transparency service.
+
+Implementations MUST use the endpoints defined in {{-NONCE-ENDPOINT}} in cases where the "nonce" is made available from the transparency service, to an issuer over HTTP.
+
+In cases where a transparency service maintains multiple independent logs under the same origin, the issuer MUST submit the opaque signature to the correct log.
+
+This can be accomplished by providing unique identifiers for the logs, and basing the Register Opaque Signature endpoint on those identifiers.
+
+The following informative examples are provided:
+
+~~~
+POST https://organization-1.transparency.example/register/opaque-signature
+POST https://transparency.example/organization-2/register/opaque-signature
+~~~
+
+In case the authorization scheme used to protect the endpoints binds access to a specific log, for example using a JWT based access token, granting write ability to a specific log, the token can be used to convey the desired log, and the endpoint and host can ommit log specific identifiers, for example:
+
+~~~ http-message
+
+POST /register/opaque-signature HTTP/1.1
+Host: transparency.service.example
+
+Authorization: Bearer "{header}.\
+{ 
+  "iss": "https://issuer.transparency.example",
+  "sub": "user@vendor.example",
+  "client_id": "s6BhdRkqt3"
+  "aud": [
+    "https://log1.transparency.example", 
+    "https://transparency.example/log2"
+  ],
+  "scope": [
+    "opaque-signature:register",
+    ...
+  ],
+}.{signature}"
+
+Content-Type: application/opaque-signature+cose
+Body: ...
+~~~
+
+For JWT based access tokens, see:
+
+- "aud" as defined in {{ Section 3.1.3 of RFC8392 }}.
+- "scope" as defined in {{ Section 4.2 of RFC8693 }}.
+- "client_id" as defined in {{ Section 4.3 of RFC8693 }}.
+
+For CWT based access tokens, see:
+
+- "aud" as defined in {{ Section 4.1.3 of RFC7519 }}.
+- "scope" as defined in {{ Section 4.2 of RFC8693 }}.
+- "client_id" as defined in [NOT POSSIBLE?](https://mailarchive.ietf.org/arch/msg/oauth/aJk_fJd9n8oGVKEafM2zMQdyWb4/)
 
 ## Request Receipt
 
