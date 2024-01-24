@@ -551,8 +551,14 @@ This can be accomplished by providing unique identifiers for the logs, and basin
 The following informative examples are provided:
 
 ~~~
-POST https://organization-1.transparency.example/register/opaque-signature
-POST https://transparency.example/organization-2/register/opaque-signature
+NOTE: '\' line wrapping per RFC 8792
+
+POST https://organization-1.transparency.example\
+/register/opaque-signature
+
+POST https://transparency.example\
+/organization-2/register/opaque-signature
+
 ~~~
 
 In case the authorization scheme used to protect the endpoints binds access to a specific log, for example using a JWT based access token, granting write ability to a specific log, the token can be used to convey the desired log, and the endpoint and host can ommit log specific identifiers, for example:
@@ -563,12 +569,12 @@ POST /register/opaque-signature HTTP/1.1
 Host: transparency.service.example
 
 Authorization: Bearer "{header}.\
-{ 
+{
   "iss": "https://issuer.transparency.example",
   "sub": "user@vendor.example",
   "client_id": "s6BhdRkqt3"
   "aud": [
-    "https://log1.transparency.example", 
+    "https://log1.transparency.example",
     "https://transparency.example/log2"
   ],
   "scope": [
@@ -583,14 +589,14 @@ Body: ...
 
 For JWT based access tokens, see:
 
-- "aud" as defined in {{ Section 3.1.3 of RFC8392 }}.
-- "scope" as defined in {{ Section 4.2 of RFC8693 }}.
-- "client_id" as defined in {{ Section 4.3 of RFC8693 }}.
+- "aud" as defined in { Section 3.1.3 of RFC8392 }.
+- "scope" as defined in { Section 4.2 of RFC8693 }.
+- "client_id" as defined in { Section 4.3 of RFC8693 }.
 
 For CWT based access tokens, see:
 
-- "aud" as defined in {{ Section 4.1.3 of RFC7519 }}.
-- "scope" as defined in {{ Section 4.2 of RFC8693 }}.
+- "aud" as defined in { Section 4.1.3 of RFC7519 }.
+- "scope" as defined in { Section 4.2 of RFC8693 }.
 - "client_id" as defined in [NOT POSSIBLE?](https://mailarchive.ietf.org/arch/msg/oauth/aJk_fJd9n8oGVKEafM2zMQdyWb4/)
 
 ## Request Receipt
